@@ -30,6 +30,7 @@ public class DataController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<String> uploadData(@RequestParam("file") MultipartFile file) {
         String responseMessage;
 

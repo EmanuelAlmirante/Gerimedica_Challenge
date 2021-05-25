@@ -1,4 +1,3 @@
-FROM openjdk:11-jdk-slim
 FROM maven:3.6.3-jdk-11-slim
 
 MAINTAINER Emanuel Almirante, emanuelalmirante@gmail.com
@@ -10,7 +9,8 @@ COPY pom.xml /home/app
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN mvn -f /home/app/pom.xml clean package
 
-ARG JAR_FILE=target/*.jar
+VOLUME /tmp
+ARG JAR_FILE=target/gerimedica-0.0.1-SNAPSHOT.jar
 COPY ${JAR_FILE} app.jar
 ENTRYPOINT ["java","-jar","/app.jar"]
 

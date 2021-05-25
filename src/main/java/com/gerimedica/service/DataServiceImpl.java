@@ -1,6 +1,8 @@
 package com.gerimedica.service;
 
 import com.gerimedica.domain.Data;
+import com.gerimedica.exception.BusinessException;
+import com.gerimedica.exception.TechnicalException;
 import com.gerimedica.repository.DataRepository;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -55,7 +57,8 @@ public class DataServiceImpl implements DataService {
     public ByteArrayInputStream getDataByCode(String code) {
         Optional<Data> data = dataRepository.findById(code);
 
-        return data.map(dataOutput -> convertDataToCsv(Collections.singletonList(dataOutput))).orElse(null);
+        return data.map(dataOutput -> convertDataToCsv(Collections.singletonList(dataOutput)))
+                   .orElseThrow(() -> new BusinessException("No CSV with code " + code));
     }
 
     @Override
@@ -66,9 +69,8 @@ public class DataServiceImpl implements DataService {
     private List<Data> convertCsvToData(MultipartFile file) {
         InputStream inputStream = getInputStream(file);
 
-        try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream,
-                                                                                     StandardCharsets.UTF_8));
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream,
+                                                                                      StandardCharsets.UTF_8))) {
             CSVParser csvParser = new CSVParser(bufferedReader,
                                                 CSVFormat
                                                         .DEFAULT
@@ -79,7 +81,7 @@ public class DataServiceImpl implements DataService {
             Iterable<CSVRecord> csvRecords = csvParser.getRecords();
             return parseDataList(csvRecords);
         } catch (IOException exception) {
-            throw new RuntimeException("Cannot save CSV: " + exception.getMessage());
+            throw new TechnicalException("Cannot save CSV: " + exception.getMessage());
         }
     }
 
@@ -89,7 +91,7 @@ public class DataServiceImpl implements DataService {
         try {
             inputStream = file.getInputStream();
         } catch (IOException exception) {
-            throw new RuntimeException("Cannot save CSV: " + exception.getMessage());
+            throw new TechnicalException("Cannot save CSV: " + exception.getMessage());
         }
 
         return inputStream;
@@ -140,7 +142,7 @@ public class DataServiceImpl implements DataService {
                 dataList.add(data);
             }
         } catch (ParseException exception) {
-            throw new RuntimeException("Date in wrong format. Use dd-MM-yyyy: " + exception.getMessage());
+            throw new TechnicalException("Date in wrong format. Use dd-MM-yyyy: " + exception.getMessage());
         }
 
         return dataList;
@@ -180,7 +182,7 @@ public class DataServiceImpl implements DataService {
 
             return new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
         } catch (IOException exception) {
-            throw new RuntimeException("Cannot import data to a CSV: " + exception.getMessage());
+            throw new TechnicalException("Cannot import data to a CSV: " + exception.getMessage());
         }
     }
 }
